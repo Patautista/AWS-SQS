@@ -21,7 +21,7 @@ func main() {
 	svc := sqs.New(sess)
 
 	result, err := svc.CreateQueue(&sqs.CreateQueueInput{
-		QueueName: aws.String("SQS_QUEUE_NAME"),
+		QueueName: aws.String("fila-criada-remotamente"),
 		Attributes: map[string]*string{
 			"DelaySeconds":           aws.String("60"),
 			"MessageRetentionPeriod": aws.String("86400"),
