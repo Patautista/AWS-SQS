@@ -33,4 +33,5 @@ func main() {
 	}
 
 	fmt.Println("Success", *result.QueueUrl)
+
 }
