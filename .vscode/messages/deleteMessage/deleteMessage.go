@@ -14,7 +14,7 @@ func main() {
 	}))
 
 	svc := sqs.New(sess)
-	qURL := "QueueURL"
+	qURL := "https://sqs.us-east-2.amazonaws.com/605122763179/fila-criada-remotamente"
 
 	result, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 		AttributeNames: []*string{
