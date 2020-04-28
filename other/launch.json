@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "/Users/caleb/AWS-SQS/.vscode/changeVisibility/changeVisibility.go",
+            "program": "/Users/caleb/AWS-SQS/other/messages/receiveMessage/receiveMessage.go",
             "env": {},
             "args": []
         }

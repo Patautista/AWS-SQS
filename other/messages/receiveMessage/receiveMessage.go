@@ -1,71 +1,43 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
 func main() {
-	// snippet-start:[sqs.go.longpolling_receive_message.vars]
-	namePtr := flag.String("n", "", "fila-criada-remotamente")
-	timeoutPtr := flag.Int64("t", 20, "(Optional) Timeout in seconds for long polling")
-
-	flag.Parse()
-
-	if *namePtr == "" {
-		flag.PrintDefaults()
-		exitErrorf("Queue name required")
-	}
-	// snippet-end:[sqs.go.longpolling_receive_message.vars]
-
-	// Initialize a session that the SDK will use to load
-	// credentials from the shared credentials file. (~/.aws/credentials).
-	// snippet-start:[sqs.go.longpolling_receive_message.session]
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
 	svc := sqs.New(sess)
-	// snippet-end:[sqs.go.longpolling_receive_message.session]
+	qURL := "https://sqs.us-east-2.amazonaws.com/605122763179/fila-criada-remotamente"
 
-	// Need to convert the queue name into a URL. Make the GetQueueUrl
-	// API call to retrieve the URL. This is needed for receiving messages
-	// from the queue.
-	// snippet-start:[sqs.go.longpolling_receive_message.url]
-	resultURL, err := svc.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: namePtr,
-	})
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == sqs.ErrCodeQueueDoesNotExist {
-			exitErrorf("Unable to find queue %q.", *namePtr)
-		}
-		exitErrorf("Unable to queue %q, %v.", *namePtr, err)
-	}
-	// snippet-end:[sqs.go.longpolling_receive_message.url]
-
-	// Receive a message from the SQS queue with long polling enabled.
-	// snippet-start:[sqs.go.longpolling_receive_message.receive]
 	result, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
-		QueueUrl: resultURL.QueueUrl,
-		AttributeNames: aws.StringSlice([]string{
-			"SentTimestamp",
-		}),
+		AttributeNames: []*string{
+			aws.String(sqs.MessageSystemAttributeNameSentTimestamp),
+		},
+		MessageAttributeNames: []*string{
+			aws.String(sqs.QueueAttributeNameAll),
+		},
+		QueueUrl:            &qURL,
 		MaxNumberOfMessages: aws.Int64(1),
-		MessageAttributeNames: aws.StringSlice([]string{
-			"All",
-		}),
-		WaitTimeSeconds: timeoutPtr,
+		VisibilityTimeout:   aws.Int64(20), // 20 seconds
+		WaitTimeSeconds:     aws.Int64(0),
 	})
+
 	if err != nil {
-		exitErrorf("Unable to receive message from queue %q, %v.", *namePtr, err)
+		fmt.Println("Error", err)
+		return
 	}
 
+	if len(result.Messages) == 0 {
+		fmt.Println("Received no messages")
+		return
+	}
 	fmt.Printf("Received %d messages.\n", len(result.Messages))
 	if len(result.Messages) > 0 {
 		fmt.Println(result.Messages)
@@ -73,8 +45,8 @@ func main() {
 	// snippet-end:[sqs.go.longpolling_receive_message.receive]
 }
 
-// snippet-start:[sqs.go.longpolling_receive_message.exit]
-func exitErrorf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
-	os.Exit(1)
-}
+// // snippet-start:[sqs.go.longpolling_receive_message.exit]
+// func exitErrorf(msg string, args ...interface{}) {
+// 	fmt.Fprintf(os.Stderr, msg+"\n", args...)
+// 	os.Exit(1)
+// }
